@@ -27,3 +27,8 @@ bin/
 # Kate temporary files
 *~
 *.kate-swp
+
+CMakeLists.txt
+*.iml
+.idea
+cmake-build-debug

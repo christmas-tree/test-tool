@@ -37,13 +37,13 @@ double start_angle, start_elevation, start_distance;
 int start_x, start_y;
 double orbit_angle = 192.0;  // camera orbit angle, degrees
 double camera_elevation = -15;  // camera elevation angle, degrees
-double camera_distance = 16.0;  // distance from origin, metres
+double camera_distance = 50.0;  // distance from origin, metres
 double camera_aspect = 1.0;  // will be updated to match window aspect ratio
 
 // Shape parameters
-#define SHAPE_THICKNESS 0.06  // thickness of points and lines, metres
+#define SHAPE_THICKNESS 0.09  // thickness of points and lines, metres
 
-#define MAX_CHANNELS 10
+#define MAX_CHANNELS 16
 int channel_offsets[MAX_CHANNELS];
 int channel_num_pixels[MAX_CHANNELS];
 int num_channels= 0;
@@ -183,7 +183,7 @@ void display() {
 
   glClearColor(0.1, 0.1, 0.1, 1.0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  draw_axes();
+  //draw_axes();
   GLUquadric* quad = gluNewQuadric();
   for (i = 0, sh = shapes; i < num_shapes; i++, sh++) {
     sh->draw(sh, quad);
@@ -208,11 +208,18 @@ void update_camera() {
 void reshape(int width, int height) {
   glViewport(0, 0, width, height);
   camera_aspect = ((double) width)/((double) height);
+  glViewport(0, 0, width, height);
+
+  glOrtho(-50.0 * camera_aspect, 50.0 * camera_aspect, -50.0, 50.0, 1.0, -1.0);
+
   update_camera();
 }
 
 void keyboard(unsigned char key, int x, int y) {
   if (key == '\x1b' || key == 'q') exit(0);
+  if (key == '-') camera_distance = camera_distance + 5;
+  if (key == '+') camera_distance = camera_distance - 5;
+  update_camera();
 }
 
 void handler(u8 channel, u16 count, pixel* p) {
@@ -283,6 +290,11 @@ void mouse(int button, int state, int x, int y) {
     start_distance = camera_distance;
     start_x = x;
     start_y = y;
+  } else  if (state == GLUT_DOWN && glutGetModifiers() & GLUT_ACTIVE_CTRL) {
+    dollying = 1;
+    start_distance = camera_distance;
+    start_x = x;
+    start_y = y;
   } else if (state == GLUT_DOWN) {
     orbiting = 1;
     start_angle = orbit_angle;
@@ -338,7 +350,7 @@ void load_layout(char* filename, int channel) {
   cJSON* start;
   cJSON* x2;
   int i = 0;
-  
+
   buffer = read_file(filename);
   if (buffer == NULL) {
 	  fprintf(stderr, "Unable to open '%s'\n", filename);
@@ -417,6 +429,7 @@ void usage(char* prog_name) {
 int main(int argc, char** argv) {
   u16 port;
 
+  glutInitWindowSize(1280, 1024);
   glutInit(&argc, argv);
 
   int iflag = 0;
